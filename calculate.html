@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>부동산 투자 시뮬레이터</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #333;
+      color: white;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: background 0.3s;
+    }
+    body.dark .card {
+      background: #444;
+      box-shadow: 0 2px 6px rgba(255,255,255,0.1);
+    }
+    input {
+      padding: 5px;
+      width: 100px;
+      margin-left: 10px;
+    }
+    .result {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .green { color: green; }
+    .blue { color: blue; }
+    #theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    body.dark #theme-toggle {
+      background: #555;
+    }
+  </style>
+</head>
+
+<body>
+
+<button id="theme-toggle" onclick="toggleDarkMode()">🌙 다크모드</button>
+
+<div class="container">
+
+  <h2>🏠 경매 투자 수익 시뮬레이터</h2>
+
+  <!-- 입력 -->
+  <div class="card">
+    <h3>입력값</h3>
+
+    감정가 <input id="appraisal" value="332000000"><br><br>
+    낙찰가율 <input id="ratio" value="0.9" step="0.01"><br><br>
+    대출비율 <input id="loanRatio" value="0.6" step="0.1"><br><br>
+    금리 <input id="interest" value="0.05" step="0.01"><br><br>
+    보유기간(개월) <input id="months" value="4"><br><br>
+    예상 매도가 <input id="salePrice" value="330000000"><br><br>
+
+    <button onclick="calculate()">계산하기</button>
+  </div>
+
+  <!-- 결과 -->
+  <div class="card">
+    <h3>결과</h3>
+    <div id="result"></div>
+  </div>
+
+  <!-- 그래프 -->
+  <div class="card">
+    <h3>수익률 그래프</h3>
+    <canvas id="profitChart"></canvas>
+  </div>
+
+</div>
+
+<script>
+
+let chart;
+
+// 계산 함수
+function calculate() {
+
+  let appraisal = Number(document.getElementById("appraisal").value);
+  let ratio = Number(document.getElementById("ratio").value);
+  let loanRatio = Number(document.getElementById("loanRatio").value);
+  let interestRate = Number(document.getElementById("interest").value);
+  let months = Number(document.getElementById("months").value);
+  let salePrice = Number(document.getElementById("salePrice").value);
+
+  let bidPrice = appraisal * ratio;
+  let loan = bidPrice * loanRatio;
+  let equity = bidPrice - loan;
+
+  let interest = loan * interestRate * (months / 12);
+
+  let extraCost = 6000000; // 부대비용
+  let totalCost = bidPrice + interest + extraCost;
+
+  let profit = salePrice - totalCost;
+  let roi = profit / equity * 100;
+
+  document.getElementById("result").innerHTML = `
+    낙찰가: ${bidPrice.toLocaleString()} 원<br>
+    총비용: ${totalCost.toLocaleString()} 원<br>
+    <span class="green">수익: ${profit.toLocaleString()} 원</span><br>
+    <span class="blue">ROI: ${roi.toFixed(2)} %</span>
+  `;
+
+  drawChart(appraisal, loanRatio, interestRate, months, salePrice);
+}
+
+
+// 그래프
+function drawChart(appraisal, loanRatio, interestRate, months, salePrice) {
+
+  let ratios = [0.8, 0.85, 0.9, 0.95];
+  let profits = [];
+
+  ratios.forEach(r => {
+    let bidPrice = appraisal * r;
+    let loan = bidPrice * loanRatio;
+    let interest = loan * interestRate * (months / 12);
+    let totalCost = bidPrice + interest + 6000000;
+    let profit = salePrice - totalCost;
+    profits.push(profit);
+  });
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("profitChart"), {
+    type: "bar",
+    data: {
+      labels: ["80%", "85%", "90%", "95%"],
+      datasets: [{
+        label: "수익",
+        data: profits,
+        backgroundColor: "rgba(54, 162, 235, 0.6)"
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function toggleDarkMode() {
+  const body = document.body;
+  const button = document.getElementById('theme-toggle');
+  body.classList.toggle('dark');
+  if (body.classList.contains('dark')) {
+    button.textContent = '☀️ 화이트모드';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    button.textContent = '🌙 다크모드';
+    localStorage.setItem('theme', 'light');
+  }
+}
+
+// 초기 테마 설정
+window.onload = function() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark');
+    document.getElementById('theme-toggle').textContent = '☀️ 화이트모드';
+  }
+};
+
+</script>
+
+</body>
+</html>
