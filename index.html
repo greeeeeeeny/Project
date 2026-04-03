@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>부동산 투자 수익률 계산기</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>부동산 투자 수익률 계산기</h2>
+
+  <label>감정가 (원):</label><br>
+  <input type="number" id="appraisal"><br><br>
+
+  <label>낙찰가율 (%):</label><br>
+  <input type="number" id="rate"><br><br>
+
+  <label>예상 매도가 (원):</label><br>
+  <input type="number" id="sell"><br><br>
+
+  <button onclick="calculate()">계산하기</button>
+
+  <h3 id="result"></h3>
+
+  <canvas id="chart" width="400" height="200"></canvas>
+
+  <script>
+    let chart;
+
+    function calculate() {
+      const appraisal = parseFloat(document.getElementById('appraisal').value);
+      const rate = parseFloat(document.getElementById('rate').value);
+      const sell = parseFloat(document.getElementById('sell').value);
+
+      if (!appraisal || !rate || !sell) {
+        alert("값을 모두 입력하세요");
+        return;
+      }
+
+      // 🔥 핵심 변경: 낙찰가율 → 낙찰가 계산
+      const purchase = appraisal * (rate / 100);
+
+      const profit = sell - purchase;
+      const roi = (profit / purchase) * 100;
+
+      document.getElementById('result').innerText =
+        `낙찰가: ${purchase.toLocaleString()}원
+수익: ${profit.toLocaleString()}원
+수익률: ${roi.toFixed(2)}%`;
+
+      drawChart(purchase, sell);
+    }
+
+    function drawChart(purchase, sell) {
+      const ctx = document.getElementById('chart').getContext('2d');
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['매입가', '매도가'],
+          datasets: [{
+            label: '금액 비교',
+            data: [purchase, sell]
+          }]
+        }
+      });
+    }
+  </script>
+</body>
+</html>
